@@ -91,9 +91,67 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  package-linux:
+    name: Linux / x86_64
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Resolve release tag
+        id: meta
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            tag="${{ github.event.release.tag_name }}"
+          else
+            tag="${{ inputs.tag }}"
+          fi
+
+          if [[ -z "$tag" ]]; then
+            echo "Release tag is required" >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Install Linux dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          xargs -a .github/ci/ubuntu-24.04-packages.txt sudo apt-get install -y --no-install-recommends
+
+      - name: Configure
+        shell: bash
+        run: cmake --preset release
+
+      - name: Build
+        run: cmake --build --preset release --parallel
+
+      - name: Test
+        run: ctest --preset release --output-on-failure
+
+      - name: Package Linux AppImage
+        shell: bash
+        run: |
+          build-tools/package-nightly-linux.sh \
+            build/release \
+            dist \
+            AppDir \
+            "notepadqq-${{ steps.meta.outputs.tag }}-linux-x86_64"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: notepadqq-release-linux-x86_64
+          path: dist/*
+          if-no-files-found: error
+
   publish:
-    name: Publish DMG assets
-    needs: package-macos
+    name: Publish release assets
+    needs: [package-macos, package-linux]
     runs-on: ubuntu-24.04
     steps:
       - name: Resolve release tag
@@ -118,9 +176,11 @@ jobs:
         with:
           path: dist
 
-      - name: Publish DMG assets
+      - name: Publish release assets
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          files: dist/**/*.dmg
+          files: |
+            dist/**/*.dmg
+            dist/**/*.AppImage
           fail_on_unmatched_files: true
