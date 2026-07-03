@@ -106,7 +106,8 @@ If the environment cannot run one of these, explain the limitation and run the n
 - Create an annotated tag using the `v<version>` pattern, for example `v2.1.0`, unless the repo already documents a different convention.
 - Push the branch and tag only with explicit user approval.
 - Creating or publishing a GitHub release with that tag triggers `.github/workflows/release.yml` when the release is published.
-- Name the GitHub release using the `Notepadqq <version>` pattern, for example `Notepadqq 2.1.0`, unless the user explicitly asks for a different title.
+- Name the GitHub release using the `v<version>` pattern, for example `v2.1.0`, unless the user explicitly asks for a different title.
+- Draft a user-friendly release body by summarizing the main changes, and use the `generate_release_notes` parameter to also append a detailed changelog.
 - Prefer drafting the GitHub release first when the user explicitly wants a draft release page.
 - If the tag already exists, prefer using the workflow-dispatch path in `.github/workflows/release.yml` with the existing tag.
 - If the Snap release should reach end users on the stable channel, remind the user to open the Snapcraft dashboard and promote the newly built revision to `stable` after the release is published.
