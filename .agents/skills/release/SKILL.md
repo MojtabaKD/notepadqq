@@ -30,7 +30,7 @@ This file is written to be provider-neutral so the same workflow can be used by 
 - The manpage header in `support_files/manpage/notepadqq.1` includes a version string and release month/year that should be kept current for real releases.
 - The Snap package declares its own version in `snap/snapcraft.yaml`.
 - Git tags for stable releases should follow the `v<version>` pattern, for example `v2.1.0`.
-- GitHub release titles should follow the `Notepadqq <version>` pattern, for example `Notepadqq 2.1.0`.
+- GitHub release titles should follow the `v<version>` pattern, for example `v2.1.0`.
 - The release workflow in `.github/workflows/release.yml` currently publishes macOS DMG assets only.
 - Linux AppImages are produced by the nightly workflow in `.github/workflows/nightly.yml`, not by the stable release workflow.
 
