@@ -373,8 +373,8 @@ QtPromise::QPromise<QVariant> Editor::asyncSendMessageWithResultP(const QString 
         QtPromise::QPromise<QVariant>([&](const QtPromise::QPromiseResolve<QVariant>& resolve,
                                           const QtPromise::QPromiseReject<QVariant>& /* reject */) {
             auto conn = std::make_shared<QMetaObject::Connection>();
-            *conn =
-                QObject::connect(this, &Editor::asyncReplyReceived, this, [=, this](unsigned int id, QString, QVariant data) {
+            *conn = QObject::connect(
+                this, &Editor::asyncReplyReceived, this, [=, this](unsigned int id, QString, QVariant data) {
                     if (id == currentMsgIdentifier) {
                         QObject::disconnect(*conn);
                         resolve(data);
