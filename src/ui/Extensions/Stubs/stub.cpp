@@ -155,8 +155,7 @@ QVariant Stub::genericCall(QObject* object, QMetaMethod metaMethod, QVariantList
         QByteArray methodTypeName = methodTypes.at(i);
         // QByteArray argTypeName = arg.typeName();
 
-        int methodType = QMetaType::UnknownType;
-        methodType = QMetaType::fromName(methodTypeName.constData()).id();
+        QMetaType methodType = QMetaType::fromName(methodTypeName.constData());
         // QVariant::Type argType = arg.type();
 
         QVariant copy = QVariant(arg);
@@ -164,7 +163,7 @@ QVariant Stub::genericCall(QObject* object, QMetaMethod metaMethod, QVariantList
         // If the types are not the same, attempt a conversion. If it
         // fails, we cannot proceed.
 
-        if (copy.type() != methodType) {
+        if (copy.metaType() != methodType) {
             if (copy.canConvert(methodType)) {
                 if (!copy.convert(methodType)) {
                     /*qWarning() << "Cannot convert" << argTypeName
@@ -191,7 +190,7 @@ QVariant Stub::genericCall(QObject* object, QMetaMethod metaMethod, QVariantList
         // the QVariant.
 
         QGenericArgument genericArgument(
-            QMetaType::typeName(argument.userType()), const_cast<void*>(argument.constData()));
+            QMetaType(argument.userType()).name(), const_cast<void*>(argument.constData()));
 
         arguments << genericArgument;
     }

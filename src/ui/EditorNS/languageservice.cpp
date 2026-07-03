@@ -15,7 +15,8 @@ LanguageService::LanguageService()
     QFileInfo fileInfo(Notepadqq::editorPath());
     QString fileName = fileInfo.absolutePath() + "/Languages.json";
     QFile scriptFile(fileName);
-    scriptFile.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (!scriptFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
     QJsonDocument json = QJsonDocument::fromJson(scriptFile.readAll());
     scriptFile.close();
 

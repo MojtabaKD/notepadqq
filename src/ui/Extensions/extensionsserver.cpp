@@ -47,8 +47,8 @@ void ExtensionsServer::on_newConnection()
     if (client != nullptr) {
         m_sockets.append(client);
 
-        connect(client, &QLocalSocket::readyRead, this, [=] { on_clientMessage(client); });
-        connect(client, &QLocalSocket::disconnected, this, [=] { on_socketDisconnected(client); });
+        connect(client, &QLocalSocket::readyRead, this, [=, this] { on_clientMessage(client); });
+        connect(client, &QLocalSocket::disconnected, this, [=, this] { on_socketDisconnected(client); });
 
         sendMessage(client, m_extensionsRTS->getCurrentExtensionStartedEvent());
     }
