@@ -26,12 +26,8 @@ jobs:
         id: check
         shell: bash
         run: |
-          tag="nightly-${GITHUB_SHA}"
-          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          fi
+          tag="nightly"
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
           echo "release_tag=${tag}" >> "$GITHUB_OUTPUT"
 
   package:
@@ -124,10 +120,20 @@ jobs:
         shell: bash
         run: echo "tag=${{ needs.preflight.outputs.release_tag }}" >> "$GITHUB_OUTPUT"
 
+      - name: Delete existing nightly release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.meta.outputs.tag }}" >/dev/null 2>&1; then
+            gh release delete "${{ steps.meta.outputs.tag }}" --yes
+          fi
+
       - name: Publish release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          name: Nightly ${{ steps.meta.outputs.tag }}
+          name: Nightly
           prerelease: true
+          overwrite_files: true
           files: dist/**
