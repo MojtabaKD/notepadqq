@@ -213,7 +213,8 @@ QtPromise::QPromise<void> TopEditorContainer::forEachEditorAsync(bool backwardIn
 {
     return QtPromise::QPromise<void>([=, this](const auto& resolve, const auto&) {
         if (backwardIndices) {
-            std::function<std::function<void()>(int, int)> iteration = [=, this](int i, int j) {
+            std::function<std::function<void()>(int, int)> iteration;
+            iteration = [&, this](int i, int j) {
                 return [=, this]() {
                     if (i < 0) {
                         resolve();
@@ -234,7 +235,8 @@ QtPromise::QPromise<void> TopEditorContainer::forEachEditorAsync(bool backwardIn
             iteration(this->count() - 1, this->tabWidget(0)->count() - 1)();
 
         } else {
-            std::function<std::function<void()>(int, int)> iteration = [=, this](int i, int j) {
+            std::function<std::function<void()>(int, int)> iteration;
+            iteration = [&, this](int i, int j) {
                 return [=, this]() {
                     if (i >= this->count()) {
                         resolve();
