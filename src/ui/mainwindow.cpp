@@ -1194,11 +1194,11 @@ void MainWindow::on_editorAdded(EditorTabWidget* tabWidget, int tab)
 
     connect(editor.data(), &Editor::cursorActivity, this, &MainWindow::on_cursorActivity);
     connect(editor.data(), &Editor::documentInfoRequested, this, &MainWindow::refreshEditorUiCursorInfo);
-    connect(editor.data(), &Editor::currentLanguageChanged, this, [=](QString id, QString name) {
+    connect(editor.data(), &Editor::currentLanguageChanged, this, [=, this](QString id, QString name) {
         on_currentLanguageChanged(editor, id, name);
     });
     connect(editor.data(), &Editor::bannerRemoved, this, &MainWindow::on_bannerRemoved);
-    connect(editor.data(), &Editor::cleanChanged, this, [=]() {
+    connect(editor.data(), &Editor::cleanChanged, this, [=, this]() {
         if (currentEditor() == editor)
             refreshEditorUiInfo(editor);
     });
@@ -1351,7 +1351,7 @@ void MainWindow::refreshEditorUiInfo(QSharedPointer<Editor> editor)
     }
 
     // Enable / disable menus
-    editor->isCleanP().then([=](bool isClean) {
+    editor->isCleanP().then([=, this](bool isClean) {
         QUrl fileName = editor->filePath();
         ui->actionRename->setEnabled(!fileName.isEmpty());
         ui->actionMove_to_New_Window->setEnabled(isClean);
@@ -1465,7 +1465,7 @@ void MainWindow::on_actionSearch_triggered()
         instantiateFrmSearchReplace();
     }
 
-    currentEditor()->selectedTexts().then([=](QStringList sel) {
+    currentEditor()->selectedTexts().then([=, this](QStringList sel) {
         if (sel.length() > 0 && sel[0].length() > 0) {
             m_frmSearchReplace->setSearchText(sel[0]);
         }
@@ -1560,25 +1560,25 @@ void MainWindow::on_fileOnDiskChanged(EditorTabWidget* tabWidget, int tab, bool 
         banner->setObjectName("fileremoved");
         editor->insertBanner(banner);
 
-        connect(banner, &BannerFileRemoved::ignore, this, [=]() {
+        connect(banner, &BannerFileRemoved::ignore, this, [=, this]() {
             editor->removeBanner(banner);
             editor->setFocus();
         });
 
-        connect(banner, &BannerFileRemoved::save, this, [=]() { save(tabWidget, tab); });
+        connect(banner, &BannerFileRemoved::save, this, [=, this]() { save(tabWidget, tab); });
 
     } else {
         BannerFileChanged* banner = new BannerFileChanged(this);
         banner->setObjectName("filechanged");
         editor->insertBanner(banner);
 
-        connect(banner, &BannerFileChanged::ignore, this, [=]() {
+        connect(banner, &BannerFileChanged::ignore, this, [=, this]() {
             editor->removeBanner(banner);
             editor->setFocus();
             // FIXME Set editor as clean
         });
 
-        connect(banner, &BannerFileChanged::reload, this, [=]() {
+        connect(banner, &BannerFileChanged::reload, this, [=, this]() {
             editor->removeBanner(banner);
             editor->setFocus();
 
@@ -1597,7 +1597,7 @@ void MainWindow::on_actionReplace_triggered()
         instantiateFrmSearchReplace();
     }
 
-    currentEditor()->selectedTexts().then([=](QStringList sel) {
+    currentEditor()->selectedTexts().then([=, this](QStringList sel) {
         if (sel.length() > 0 && sel[0].length() > 0) {
             m_frmSearchReplace->setSearchText(sel[0]);
         }
@@ -1649,7 +1649,7 @@ void MainWindow::on_editorMouseWheel(EditorTabWidget* tabWidget, int tab, QWheel
 void MainWindow::transformSelectedText(std::function<QString(const QString&)> func)
 {
     auto editor = currentEditor();
-    editor->selectedTexts().then([=](QStringList sel) {
+    editor->selectedTexts().then([=, this](QStringList sel) {
         for (int i = 0; i < sel.length(); i++) {
             sel.replace(i, func(sel.at(i)));
         }
@@ -1812,12 +1812,12 @@ void MainWindow::on_documentLoaded(EditorTabWidget* tabWidget, int tab, bool was
 
 void MainWindow::checkIndentationMode(QSharedPointer<Editor> editor)
 {
-    editor->detectDocumentIndentation().then([=](const std::pair<IndentationMode, bool> result) {
+    editor->detectDocumentIndentation().then([=, this](const std::pair<IndentationMode, bool> result) {
         IndentationMode detected = result.first;
         bool found = result.second;
 
         if (found) {
-            editor->indentationModeP().then([=](IndentationMode curr) {
+            editor->indentationModeP().then([=, this](IndentationMode curr) {
                 bool differentTabSpaces = detected.useTabs != curr.useTabs;
                 bool differentSpaceSize =
                     detected.useTabs == false && curr.useTabs == false && detected.size != curr.size;
@@ -1830,12 +1830,12 @@ void MainWindow::checkIndentationMode(QSharedPointer<Editor> editor)
 
                     editor->insertBanner(banner);
 
-                    connect(banner, &BannerIndentationDetected::useApplicationSettings, this, [=]() {
+                    connect(banner, &BannerIndentationDetected::useApplicationSettings, this, [=, this]() {
                         editor->removeBanner(banner);
                         editor->setFocus();
                     });
 
-                    connect(banner, &BannerIndentationDetected::useDocumentSettings, this, [=]() {
+                    connect(banner, &BannerIndentationDetected::useDocumentSettings, this, [=, this]() {
                         editor->removeBanner(banner);
                         if (detected.useTabs) {
                             editor->setCustomIndentationMode(true);
@@ -2207,7 +2207,7 @@ void MainWindow::runCommand()
     auto editor = currentEditor();
 
     QUrl url = currentEditor()->filePath();
-    editor->selectedTexts().then([=](QStringList selection) {
+    editor->selectedTexts().then([=, this](QStringList selection) {
         QString cmd = command;
         if (!url.isEmpty()) {
             cmd.replace("\%url\%", url.toString(QUrl::None));
@@ -2274,7 +2274,7 @@ void MainWindow::on_actionLaunch_in_Chrome_triggered()
 QtPromise::QPromise<QStringList> MainWindow::currentWordOrSelections()
 {
     auto editor = currentEditor();
-    return editor->selectedTexts().then([=](QStringList selection) {
+    return editor->selectedTexts().then([=, this](QStringList selection) {
         if (selection.isEmpty() || selection.first().isEmpty()) {
             return editor->getCurrentWord().then([](QString word) { return QStringList(word); });
         } else {
@@ -2285,7 +2285,7 @@ QtPromise::QPromise<QStringList> MainWindow::currentWordOrSelections()
 
 QtPromise::QPromise<QString> MainWindow::currentWordOrSelection()
 {
-    return currentWordOrSelections().then([=](QStringList terms) {
+    return currentWordOrSelections().then([=, this](QStringList terms) {
         if (terms.isEmpty()) {
             return QString();
         } else {
@@ -2296,7 +2296,7 @@ QtPromise::QPromise<QString> MainWindow::currentWordOrSelection()
 
 void MainWindow::currentWordOnlineSearch(const QString& searchUrl)
 {
-    currentWordOrSelection().then([=](QString term) {
+    currentWordOrSelection().then([=, this](QString term) {
         if (!term.isNull() && !term.isEmpty()) {
             QUrl phpHelp = QUrl(searchUrl.arg(QString(QUrl::toPercentEncoding(term))));
             QDesktopServices::openUrl(phpHelp);
@@ -2363,7 +2363,7 @@ void MainWindow::on_actionMove_to_New_Window_triggered()
 
 void MainWindow::on_actionOpen_file_triggered()
 {
-    currentWordOrSelections().then([=](QStringList terms) {
+    currentWordOrSelections().then([=, this](QStringList terms) {
         if (terms.isEmpty())
             return;
 
@@ -2378,7 +2378,7 @@ void MainWindow::on_actionOpen_file_triggered()
 
 void MainWindow::on_actionOpen_in_another_window_triggered()
 {
-    currentWordOrSelections().then([=](QStringList terms) {
+    currentWordOrSelections().then([=, this](QStringList terms) {
         if (!terms.isEmpty()) {
             terms.prepend(QApplication::arguments().first());
 
@@ -2438,7 +2438,7 @@ void MainWindow::on_actionGo_to_Line_triggered()
 {
     auto editor = currentEditor();
     int currentLine = editor->cursorPosition().first;
-    editor->lineCount().then([=](int lines) {
+    editor->lineCount().then([=, this](int lines) {
         frmLineNumberChooser* frm = new frmLineNumberChooser(1, lines, currentLine + 1, this);
         if (frm->exec() == QDialog::Accepted) {
             int line = frm->value();

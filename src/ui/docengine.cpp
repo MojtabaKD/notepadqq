@@ -87,9 +87,9 @@ QtPromise::QPromise<void> DocEngine::read(QFile* file, QSharedPointer<Editor> ed
         editor->setEndOfLineSequence("\r");
 
     return editor->setValue(decoded.text)
-        .then([=]() { return editor->asyncSendMessageWithResultP("C_CMD_CLEAR_HISTORY"); })
-        .then([=]() { return editor->markClean(); })
-        .then([=]() {});
+        .then([=, this]() { return editor->asyncSendMessageWithResultP("C_CMD_CLEAR_HISTORY"); })
+        .then([=, this]() { return editor->markClean(); })
+        .then([=, this]() {});
 }
 
 int showFileSizeDialog(const QString docName, long long fileSize, bool multipleFiles)
@@ -237,7 +237,7 @@ DocEngine::loadDocumentsInBackground(const DocEngine::DocumentLoader& docLoader)
             tabWidget->editor(tabIndex)->setFocus();
         }
 
-        auto continuationP = QtPromise::QPromise<QSharedPointer<Editor>>([=](auto resolve, auto /*reject*/) {
+        auto continuationP = QtPromise::QPromise<QSharedPointer<Editor>>([=, this](auto resolve, auto /*reject*/) {
             // Compute the ms of delay based on the priority for this URL.
             constexpr int min_priority_delay = 100;
             int delay_ms = 0;
@@ -251,7 +251,7 @@ DocEngine::loadDocumentsInBackground(const DocEngine::DocumentLoader& docLoader)
                 Q_ASSERT(false); // Should never get here
             }
 
-            QTimer::singleShot(delay_ms, [=]() {
+            QTimer::singleShot(delay_ms, [=, this]() {
                 // In case of a reload, save cursor, scroll position, language
                 QPair<int, int> scrollPosition;
                 QPair<int, int> cursorPosition;
@@ -369,7 +369,7 @@ QtPromise::QPromise<void> DocEngine::loadDocuments(const DocEngine::DocumentLoad
     // the first one in the list.
     auto isFirstDocument = std::make_shared<bool>(true);
 
-    return pFor(0, fileNames.count(), [=](int i, auto _break, auto _continue) {
+    return pFor(0, fileNames.count(), [=, this](int i, auto _break, auto _continue) {
         const QUrl& url = fileNames[i];
 
         if (url.isEmpty())
@@ -949,7 +949,7 @@ int DocEngine::saveDocument(EditorTabWidget* tabWidget, int tab, QUrl outFileNam
 #ifdef Q_OS_MACOS
         // On macOS we need to give it a little bit of time, otherwise we get the
         // "document changed" banner as soon as the document is saved.
-        QTimer::singleShot(100, [=]() { monitorDocument(editor); });
+        QTimer::singleShot(100, [=, this]() { monitorDocument(editor); });
 #else
         monitorDocument(editor);
 #endif

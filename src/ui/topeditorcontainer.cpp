@@ -29,10 +29,10 @@ EditorTabWidget* TopEditorContainer::addTabWidget()
         &TopEditorContainer::on_customContextMenuRequested);
     connect(tabWidget, &EditorTabWidget::tabCloseRequested, this, &TopEditorContainer::on_tabCloseRequested);
     connect(tabWidget, &EditorTabWidget::editorAdded, this, &TopEditorContainer::on_editorAdded);
-    connect(tabWidget, &EditorTabWidget::editorMouseWheel, this, [=](int tab, QWheelEvent* ev) {
+    connect(tabWidget, &EditorTabWidget::editorMouseWheel, this, [=, this](int tab, QWheelEvent* ev) {
         emit editorMouseWheel(tabWidget, tab, ev);
     });
-    connect(tabWidget, &EditorTabWidget::tabBarDoubleClicked, this, [=](int index) {
+    connect(tabWidget, &EditorTabWidget::tabBarDoubleClicked, this, [=, this](int index) {
         emit tabBarDoubleClicked(tabWidget, index);
     });
 
@@ -211,10 +211,10 @@ QtPromise::QPromise<void> TopEditorContainer::forEachEditorAsync(bool backwardIn
         std::function<void()> goOn,
         std::function<void()> stop)> callback)
 {
-    return QtPromise::QPromise<void>([=](const auto& resolve, const auto&) {
+    return QtPromise::QPromise<void>([=, this](const auto& resolve, const auto&) {
         if (backwardIndices) {
-            std::function<std::function<void()>(int, int)> iteration = [=](int i, int j) {
-                return [=]() {
+            std::function<std::function<void()>(int, int)> iteration = [=, this](int i, int j) {
+                return [=, this]() {
                     if (i < 0) {
                         resolve();
                         return;
@@ -234,8 +234,8 @@ QtPromise::QPromise<void> TopEditorContainer::forEachEditorAsync(bool backwardIn
             iteration(this->count() - 1, this->tabWidget(0)->count() - 1)();
 
         } else {
-            std::function<std::function<void()>(int, int)> iteration = [=](int i, int j) {
-                return [=]() {
+            std::function<std::function<void()>(int, int)> iteration = [=, this](int i, int j) {
+                return [=, this]() {
                     if (i >= this->count()) {
                         resolve();
                         return;
@@ -261,7 +261,7 @@ QtPromise::QPromise<void> TopEditorContainer::forEachEditorConcurrent(std::funct
         QSharedPointer<Editor> editor,
         std::function<void()> done)> callback)
 {
-    return QtPromise::QPromise<void>([=](const auto& resolve, const auto&) {
+    return QtPromise::QPromise<void>([=, this](const auto& resolve, const auto&) {
         // Collect all the indices we're going to use
         std::vector<std::pair<int, int>> indices;
         for (int i = 0; i < this->count(); i++) {

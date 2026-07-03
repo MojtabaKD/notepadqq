@@ -97,7 +97,7 @@ void InstallExtension::installNodejsExtension(const QString& packagePath)
 
     QProcess* process = new QProcess(this);
 
-    connect(process, &QProcess::error, [=]() {
+    connect(process, &QProcess::error, [=, this]() {
         setUIClean(false);
 
         QMessageBox infoBox;
@@ -109,7 +109,7 @@ void InstallExtension::installNodejsExtension(const QString& packagePath)
 
     connect(process,
         static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-        [=](int exitCode, QProcess::ExitStatus) {
+        [=, this](int exitCode, QProcess::ExitStatus) {
             if (exitCode == 0) {
                 setUIClean(true);
 

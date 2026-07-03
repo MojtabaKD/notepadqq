@@ -240,7 +240,7 @@ void Editor::setLanguage(const Language* lang)
         setIndentationMode(lang);
     }
     m_currentLanguage = lang;
-    asyncSendMessageWithResultP("C_CMD_SET_LANGUAGE", lang->mime.isEmpty() ? lang->mode : lang->mime).then([=]() {
+    asyncSendMessageWithResultP("C_CMD_SET_LANGUAGE", lang->mime.isEmpty() ? lang->mode : lang->mime).then([=, this]() {
         emit currentLanguageChanged(m_currentLanguage->id, m_currentLanguage->name);
     });
 }
@@ -374,7 +374,7 @@ QtPromise::QPromise<QVariant> Editor::asyncSendMessageWithResultP(const QString 
                                           const QtPromise::QPromiseReject<QVariant>& /* reject */) {
             auto conn = std::make_shared<QMetaObject::Connection>();
             *conn =
-                QObject::connect(this, &Editor::asyncReplyReceived, this, [=](unsigned int id, QString, QVariant data) {
+                QObject::connect(this, &Editor::asyncReplyReceived, this, [=, this](unsigned int id, QString, QVariant data) {
                     if (id == currentMsgIdentifier) {
                         QObject::disconnect(*conn);
                         resolve(data);
@@ -398,7 +398,7 @@ QtPromise::QPromise<QVariant> Editor::asyncSendMessageWithResultP(const QString 
     } else {
         // Send it as soon as the editor becomes ready
         auto conn = std::make_shared<QMetaObject::Connection>();
-        *conn = QObject::connect(this, &Editor::editorReady, this, [=]() {
+        *conn = QObject::connect(this, &Editor::editorReady, this, [=, this]() {
             QObject::disconnect(*conn);
             m_loaded = true;
             emit m_jsToCppProxy->messageReceivedByJs(message_id, data);
@@ -678,7 +678,7 @@ void Editor::print(std::shared_ptr<QPrinter> printer)
     m_webView->page()->setBackgroundColor(Qt::transparent);
     m_webView->setStyleSheet("background-color: white");
     sendMessage("C_CMD_DISPLAY_PRINT_STYLE");
-    m_webView->page()->print(printer.get(), [=](bool /*success*/) {
+    m_webView->page()->print(printer.get(), [=, this](bool /*success*/) {
         // Note: it is important to capture "printer" in order to keep the shared_ptr alive.
         sendMessage("C_CMD_DISPLAY_NORMAL_STYLE");
         m_webView->setStyleSheet(prevStylesheet);
@@ -712,8 +712,8 @@ QtPromise::QPromise<QByteArray> Editor::printToPdf(const QPageLayout& pageLayout
         asyncSendMessageWithResultP("C_CMD_DISPLAY_PRINT_STYLE").wait();
 
         m_webView->page()->printToPdf(
-            [=](const QByteArray& data) {
-                QTimer::singleShot(0, [=]() {
+            [=, this](const QByteArray& data) {
+                QTimer::singleShot(0, [=, this]() {
                     asyncSendMessageWithResultP("C_CMD_DISPLAY_NORMAL_STYLE").wait();
                     m_webView->setStyleSheet(prevStylesheet);
                     m_webView->page()->setBackgroundColor(prevBackgroundColor);

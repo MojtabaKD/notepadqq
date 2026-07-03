@@ -123,7 +123,7 @@ void SingleApplication::newConnection()
 {
     while (m_localServer->hasPendingConnections()) {
         QLocalSocket* conn = m_localServer->nextPendingConnection();
-        connect(conn, &QLocalSocket::readyRead, this, [=]() {
+        connect(conn, &QLocalSocket::readyRead, this, [=, this]() {
             QString message = LocalCommunication::receive(conn);
 
             if (message == "NEW_CLIENT") {
