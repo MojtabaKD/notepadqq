@@ -2,7 +2,7 @@ name: Release Builds
 
 on:
   release:
-    types: [published]
+    types: [created]
   workflow_dispatch:
     inputs:
       tag:
@@ -184,3 +184,11 @@ jobs:
             dist/**/*.dmg
             dist/**/*.AppImage
           fail_on_unmatched_files: true
+
+      - name: Publish release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release edit "${{ steps.meta.outputs.tag }}" --draft=false --latest

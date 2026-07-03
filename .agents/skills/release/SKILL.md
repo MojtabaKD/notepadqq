@@ -88,31 +88,26 @@ Do not use the historical `support_files/notepadqq.appdata.xml` path unless the 
 
 If the environment cannot run one of these, explain the limitation and run the narrowest available validation instead.
 
-6. Review packaging implications.
-
-- For macOS release assets, the current workflow packages DMGs through `build-tools/package-nightly-macos.sh` invoked by `.github/workflows/release.yml`.
-- For Linux, note explicitly that stable release automation does not currently publish AppImages.
-- If the user expects Linux release assets, call that out as a workflow gap rather than assuming they exist.
-
-7. Prepare the release commit.
+6. Prepare the release commit.
 
 - Summarize exactly which version-bearing files changed.
 - For a normal stable release, that usually includes `CMakeLists.txt`, `src/ui/include/notepadqq.h`, `support_files/com.notepadqq.Notepadqq.metainfo.xml`, `support_files/manpage/notepadqq.1`, and `snap/snapcraft.yaml`.
 - If asked to commit, create a normal commit with a version-specific message.
 - Do not create or amend commits unless the user explicitly asks.
 
-8. Tag and publish.
+7. Tag and publish.
 
 - Create an annotated tag using the `v<version>` pattern, for example `v2.1.0`, unless the repo already documents a different convention.
 - Push the branch and tag only with explicit user approval.
-- Creating or publishing a GitHub release with that tag triggers `.github/workflows/release.yml` when the release is published.
+- Create a **draft** GitHub release for that tag. This triggers `.github/workflows/release.yml` which builds and uploads release artifacts. The workflow then automatically publishes the draft (removes the draft status) once all assets are attached, eliminating the window where a published release has no artifacts.
 - Name the GitHub release using the `v<version>` pattern, for example `v2.1.0`, unless the user explicitly asks for a different title.
-- Draft a user-friendly release body by summarizing the main changes, and use the `generate_release_notes` parameter to also append a detailed changelog.
-- Prefer drafting the GitHub release first when the user explicitly wants a draft release page.
+- Generate the GitHub release body by examining the commit log since the last release tag, then summarizing the most important changes into a concise, user-friendly overview.
+- Present the generated release body to the user and ask them to review and approve it before creating the release. Do not proceed with publishing until the user has reviewed and confirmed the body.
+- Use the `--generate-notes` parameter so that a detailed changelog will be appended to the body you provide.
 - If the tag already exists, prefer using the workflow-dispatch path in `.github/workflows/release.yml` with the existing tag.
 - If the Snap release should reach end users on the stable channel, remind the user to open the Snapcraft dashboard and promote the newly built revision to `stable` after the release is published.
 
-9. Optionally start the next development cycle.
+8. Optionally start the next development cycle.
 
 - Do this as a separate follow-up change after the stable release commit and tag, not by mutating the just-released version in place.
 - Ask the user which next development version they want, for example `2.0.1+git` or `2.1.0-beta+git`.
