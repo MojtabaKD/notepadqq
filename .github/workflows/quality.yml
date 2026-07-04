@@ -46,6 +46,12 @@ jobs:
           - os: ubuntu-24.04
             preset: release
             packages_file: .github/ci/ubuntu-24.04-packages.txt
+          - os: ubuntu-24.04-arm
+            preset: ci
+            packages_file: .github/ci/ubuntu-24.04-packages.txt
+          - os: ubuntu-24.04-arm
+            preset: release
+            packages_file: .github/ci/ubuntu-24.04-packages.txt
           - os: macos-14
             preset: ci
           - os: macos-14

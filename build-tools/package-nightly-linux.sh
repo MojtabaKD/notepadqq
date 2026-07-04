@@ -6,15 +6,22 @@ dist_dir="${2:-dist}"
 appdir="${3:-AppDir}"
 artifact_name="${4:-notepadqq-nightly-linux-x86_64}"
 
+arch="$(uname -m)"
+case "$arch" in
+    x86_64)  ld_arch="x86_64"  ;;
+    aarch64) ld_arch="aarch64" ;;
+    *)       ld_arch="$arch"    ;;
+esac
+
 mkdir -p "$appdir/usr" "$dist_dir"
 
 if [[ ! -x ./linuxdeploy.AppImage ]]; then
-    curl -L --retry 3 -o linuxdeploy.AppImage https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+    curl -L --retry 3 -o linuxdeploy.AppImage "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${ld_arch}.AppImage"
     chmod +x linuxdeploy.AppImage
 fi
 
 if [[ ! -x ./linuxdeploy-plugin-qt.AppImage ]]; then
-    curl -L --retry 3 -o linuxdeploy-plugin-qt.AppImage https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+    curl -L --retry 3 -o linuxdeploy-plugin-qt.AppImage "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${ld_arch}.AppImage"
     chmod +x linuxdeploy-plugin-qt.AppImage
 fi
 
