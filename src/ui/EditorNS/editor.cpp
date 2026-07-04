@@ -33,8 +33,10 @@ Editor::Editor(const Theme& theme, QWidget* parent)
 bool Editor::useMonaco()
 {
     QString engine = NqqSettings::getInstance().General.getEditorEngine();
-    if (engine == "monaco") return true;
-    if (engine == "codemirror") return false;
+    if (engine == "monaco")
+        return true;
+    if (engine == "codemirror")
+        return false;
 #ifdef NQQ_USE_MONACO
     return true;
 #else
@@ -58,9 +60,8 @@ void Editor::fullConstructor(const Theme& theme)
         query.addQueryItem("engine", "monaco");
     }
 
-    QString htmlFile = monaco ?
-        QFileInfo(Notepadqq::editorPath()).absolutePath() + "/index_monaco.html" :
-        Notepadqq::editorPath();
+    QString htmlFile =
+        monaco ? QFileInfo(Notepadqq::editorPath()).absolutePath() + "/index_monaco.html" : Notepadqq::editorPath();
 
     QUrl url = QUrl("file://" + htmlFile);
     url.setQuery(query);
