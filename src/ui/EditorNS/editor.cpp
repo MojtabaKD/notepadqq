@@ -30,6 +30,18 @@ Editor::Editor(const Theme& theme, QWidget* parent)
     : QWidget(parent)
 { fullConstructor(theme); }
 
+bool Editor::useMonaco()
+{
+    QString engine = NqqSettings::getInstance().General.getEditorEngine();
+    if (engine == "monaco") return true;
+    if (engine == "codemirror") return false;
+#ifdef NQQ_USE_MONACO
+    return true;
+#else
+    return false;
+#endif
+}
+
 void Editor::fullConstructor(const Theme& theme)
 {
     m_jsToCppProxy = new JsToCppProxy(this);
@@ -41,7 +53,16 @@ void Editor::fullConstructor(const Theme& theme)
     query.addQueryItem("themePath", theme.path);
     query.addQueryItem("themeName", theme.name);
 
-    QUrl url = QUrl("file://" + Notepadqq::editorPath());
+    const bool monaco = useMonaco();
+    if (monaco) {
+        query.addQueryItem("engine", "monaco");
+    }
+
+    QString htmlFile = monaco ?
+        QFileInfo(Notepadqq::editorPath()).absolutePath() + "/index_monaco.html" :
+        Notepadqq::editorPath();
+
+    QUrl url = QUrl("file://" + htmlFile);
     url.setQuery(query);
 
     QWebChannel* channel = new QWebChannel(this);
@@ -586,6 +607,10 @@ Editor::Theme Editor::themeFromName(QString name)
     if (name == "default" || name.isEmpty())
         return Theme();
 
+    if (useMonaco()) {
+        return Theme(name, "");
+    }
+
     QFileInfo editorPath(Notepadqq::editorPath());
     QDir bundledThemesDir(editorPath.absolutePath() + "/libs/codemirror/theme/");
 
@@ -598,6 +623,24 @@ Editor::Theme Editor::themeFromName(QString name)
 QList<Editor::Theme> Editor::themes()
 {
     auto editorPath = QFileInfo(Notepadqq::editorPath());
+
+    if (useMonaco()) {
+        QList<Theme> out;
+        out.append(Theme("vs", ""));
+        out.append(Theme("vs-dark", ""));
+        out.append(Theme("hc-black", ""));
+        out.append(Theme("hc-light", ""));
+
+        QDir addonThemesDir(editorPath.absolutePath() + "/libs/monaco-addons/themes/", "*.js");
+        for (auto&& theme : addonThemesDir.entryInfoList()) {
+            const QString name = theme.completeBaseName();
+            if (name != "_all") {
+                out.append(Theme(name, ""));
+            }
+        }
+        return out;
+    }
+
     QDir bundledThemesDir(editorPath.absolutePath() + "/libs/codemirror/theme/", "*.css");
 
     QList<Theme> out;
