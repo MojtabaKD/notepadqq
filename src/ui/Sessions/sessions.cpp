@@ -434,6 +434,10 @@ void loadSession(DocEngine* docEngine, TopEditorContainer* editorContainer, QStr
                             editor->setLanguageFromFilePath();
                         }
 
+                        // Set the correct dirty/clean icon immediately based on what we already know,
+                        // without waiting for JS round-trips through QWebChannel.
+                        tabW->setSavedIcon(idx, !cacheFileExists);
+
                         if (tab.filePath.isEmpty()) {
                             QString tabText = tabW->tabText(idx);
                             editor->setFilePath(QUrl());
@@ -470,7 +474,8 @@ void loadSession(DocEngine* docEngine, TopEditorContainer* editorContainer, QStr
                         if (tab.active) {
                             // We need to trigger a final call to MainWindow::refreshEditorUiInfo to display the correct
                             // info on start-up. The easiest way is to emit a cleanChanged() event.
-                            editor->isCleanP().then([=](bool isClean) { emit editor->cleanChanged(isClean); });
+                            // We already know the state from cacheFileExists — no need for a JS round-trip.
+                            emit editor->cleanChanged(!cacheFileExists);
                         }
                     });
 
