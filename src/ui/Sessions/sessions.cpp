@@ -410,74 +410,75 @@ void loadSession(DocEngine* docEngine, TopEditorContainer* editorContainer, QStr
             if (!fileExists && !cacheFileExists)
                 continue;
 
-            auto loader =
-                docEngine->getDocumentLoader()
-                    .setUrl(loadUrl)
-                    .setTabWidget(tabW)
-                    .setRememberLastDir(false)
-                    .setFileSizeWarning(DocEngine::FileSizeActionYesToAll)
-                    .setPriorityIdx(tab.active ? ALL_MAXIMUM_PRIORITY : ALL_MINIMUM_PRIORITY)
-                    .setManualEditorInitialization([=](QSharedPointer<Editor> editor, const QUrl& /*url*/) {
-                        int idx = tabW->indexOf(editor);
+            auto loader = docEngine->getDocumentLoader()
+                              .setUrl(loadUrl)
+                              .setTabWidget(tabW)
+                              .setRememberLastDir(false)
+                              .setFileSizeWarning(DocEngine::FileSizeActionYesToAll)
+                              .setPriorityIdx(tab.active ? ALL_MAXIMUM_PRIORITY : ALL_MINIMUM_PRIORITY)
+                              .setManualEditorInitialization([=](QSharedPointer<Editor> editor, const QUrl& /*url*/) {
+                                  int idx = tabW->indexOf(editor);
 
-                        editor->setCursorPosition(tab.cursorX, tab.cursorY);
-                        editor->setScrollPosition(tab.scrollX, tab.scrollY);
+                                  editor->setCursorPosition(tab.cursorX, tab.cursorY);
+                                  editor->setScrollPosition(tab.scrollX, tab.scrollY);
 
-                        if (tab.customIndent) {
-                            editor->setCustomIndentationMode(tab.useTabs, tab.tabSize);
-                        }
+                                  if (tab.customIndent) {
+                                      editor->setCustomIndentationMode(tab.useTabs, tab.tabSize);
+                                  }
 
-                        // DocEngine sets the editor's fileName to loadUrl since this is where the file
-                        // was loaded from. Since loadUrl could point to a cached file we reset it here.
-                        if (cacheFileExists) {
-                            editor->markDirty();
-                            editor->setLanguageFromFilePath();
-                        }
+                                  // DocEngine sets the editor's fileName to loadUrl since this is where the file
+                                  // was loaded from. Since loadUrl could point to a cached file we reset it here.
+                                  if (cacheFileExists) {
+                                      editor->markDirty();
+                                      editor->setLanguageFromFilePath();
+                                  }
 
-                        // Set the correct dirty/clean icon immediately based on what we already know,
-                        // without waiting for JS round-trips through QWebChannel.
-                        tabW->setSavedIcon(idx, !cacheFileExists);
+                                  // Set the correct dirty/clean icon immediately based on what we already know,
+                                  // without waiting for JS round-trips through QWebChannel.
+                                  tabW->setSavedIcon(idx, !cacheFileExists);
 
-                        if (tab.filePath.isEmpty()) {
-                            QString tabText = tabW->tabText(idx);
-                            editor->setFilePath(QUrl());
-                            tabW->setTabText(idx, tabText);
-                        } else {
-                            editor->setFilePath(fileUrl);
-                            if (fileExists)
-                                docEngine->monitorDocument(editor);
-                        }
+                                  if (tab.filePath.isEmpty()) {
+                                      QString tabText = tabW->tabText(idx);
+                                      editor->setFilePath(QUrl());
+                                      tabW->setTabText(idx, tabText);
+                                  } else {
+                                      editor->setFilePath(fileUrl);
+                                      if (fileExists)
+                                          docEngine->monitorDocument(editor);
+                                  }
 
-                        // If we're loading an existing file from cache we want to inform the user whether
-                        // the file has changed since Nqq was last closed. For this we can compare the
-                        // file's last modification date.
-                        if (fileExists && cacheFileExists && tab.lastModified != 0) {
-                            auto lastModified = fileInfo.lastModified().toMSecsSinceEpoch();
+                                  // If we're loading an existing file from cache we want to inform the user whether
+                                  // the file has changed since Nqq was last closed. For this we can compare the
+                                  // file's last modification date.
+                                  if (fileExists && cacheFileExists && tab.lastModified != 0) {
+                                      auto lastModified = fileInfo.lastModified().toMSecsSinceEpoch();
 
-                            if (lastModified > tab.lastModified) {
-                                editor->setFileOnDiskChanged(true);
-                            }
-                        }
+                                      if (lastModified > tab.lastModified) {
+                                          editor->setFileOnDiskChanged(true);
+                                      }
+                                  }
 
-                        // If the orig. file does not exist but *should* exist, we inform the user of its removal.
-                        if (!fileExists && !fileUrl.isEmpty()) {
-                            editor->setFileOnDiskChanged(true);
-                            emit docEngine->fileOnDiskChanged(tabW, idx, true);
-                        }
+                                  // If the orig. file does not exist but *should* exist, we inform the user of its
+                                  // removal.
+                                  if (!fileExists && !fileUrl.isEmpty()) {
+                                      editor->setFileOnDiskChanged(true);
+                                      emit docEngine->fileOnDiskChanged(tabW, idx, true);
+                                  }
 
-                        if (!tab.language.isEmpty())
-                            editor->setLanguage(tab.language);
+                                  if (!tab.language.isEmpty())
+                                      editor->setLanguage(tab.language);
 
-                        // loadDocuments() explicitly calls setFocus() so we'll have to undo that.
-                        editor->clearFocus();
+                                  // loadDocuments() explicitly calls setFocus() so we'll have to undo that.
+                                  editor->clearFocus();
 
-                        if (tab.active) {
-                            // We need to trigger a final call to MainWindow::refreshEditorUiInfo to display the correct
-                            // info on start-up. The easiest way is to emit a cleanChanged() event.
-                            // We already know the state from cacheFileExists — no need for a JS round-trip.
-                            emit editor->cleanChanged(!cacheFileExists);
-                        }
-                    });
+                                  if (tab.active) {
+                                      // We need to trigger a final call to MainWindow::refreshEditorUiInfo to display
+                                      // the correct info on start-up. The easiest way is to emit a cleanChanged()
+                                      // event. We already know the state from cacheFileExists — no need for a JS
+                                      // round-trip.
+                                      emit editor->cleanChanged(!cacheFileExists);
+                                  }
+                              });
 
             if (tab.filePath.isEmpty()) {
                 loader.setTextCodec(QTextCodec::codecForName("UTF-8")).setBOM(false);
