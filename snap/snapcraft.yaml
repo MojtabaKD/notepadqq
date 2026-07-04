@@ -14,6 +14,11 @@ confinement: classic
 icon: support_files/icons/hicolor/scalable/apps/notepadqq.svg
 base: core24
 
+platforms: 
+  amd64:
+  arm64:
+  armhf:
+
 apps:
   notepadqq:
     command: usr/bin/notepadqq
